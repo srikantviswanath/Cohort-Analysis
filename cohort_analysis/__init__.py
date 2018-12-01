@@ -2,7 +2,7 @@ import pandas as pd
 import datetime
 pd.set_option('display.width', 100000)
 pd.set_option('display.max_rows', 10000)
-
+"""
 orders = pd.read_csv('data_sources/orders.csv', ',')
 customers = pd.read_csv('data_sources/customers.csv')
 joined = pd.merge(orders, customers, how='inner', left_on='user_id', right_on='id')[['id_x', 'user_id', 'created_x', 'created_y']]
@@ -41,7 +41,7 @@ joined = pd.crosstab(joined.SignUpCohorts, joined.DeltaBins, margins=True)
 for col in joined.columns[:-1]:
     joined[col] = joined.apply(lambda row: '{:.2f} % orderers ({})'.format(row[col] / row['All'] * 100, row[col]), axis=1)
 
-print(joined)
+print(joined)"""
 #print(pd.pivot_table(joined, index=['SignUpCohorts', 'DeltaBins'], values='UserID', aggfunc=pd.Series.nunique))
 #def map_cohort_dates(start_date, cohort_size=7):
  #   pass

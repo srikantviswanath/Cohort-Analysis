@@ -39,7 +39,7 @@ def df_str_to_datetime(df, cols, datetime_format='%Y-%m-%d %H:%M:%S', tz='UTC'):
     :return pd.DataFrame:
     """
     for col in cols:
-        df[col] = df[col].apply(lambda x: datetime.datetime.strptime(x, datetime_format).replace(tzinfo=pytz.timezone('UTC')))
+        df[col] = df[col].apply(lambda x: datetime.datetime.strptime(x, datetime_format).replace(tzinfo=pytz.timezone('UTC')).date())
         if tz != 'UTC':
             df[col] = df[col].apply(lambda x: x.astimezone(pytz.timezone(tz)))
     return df
@@ -89,4 +89,21 @@ def binnify(df, input_col, bin_labels, bin_values, binned_col_name):
     :return pd.DataFrame: DataFRame with a new column :binned_col_name: containing binned output
     """
     df[binned_col_name] = pd.cut(getattr(df, input_col), bin_values, labels=bin_labels, include_lowest=True)
+    return df
+
+
+def calculate_pct(df, total_col, pct_precision=2, suffix='orderers'):
+    """
+    Given a DataFrame with hits/purchases for various cohort period columns and a total(:total_col:) column,
+    calculate corresponding percentages for purchases in each cohort group
+    :param pd.DataFram df:
+    :param str total_col:
+    :return pd.DataFrame: cohort period columns' hits/purchases transformed into percentages w.r.t total_column
+    """
+    total_col_index = df.columns.get_loc(total_col)
+    for col in df.columns[:total_col_index].tolist() + df.columns[total_col_index+1:].tolist():
+        df[col] = df.apply(
+            lambda row: '{} % {} ({})'.format(round(row[col] / row[total_col] * 100, pct_precision), suffix, row[col]),
+            axis=1
+        )
     return df
