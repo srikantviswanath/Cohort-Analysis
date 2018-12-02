@@ -29,9 +29,9 @@ def join_and_rename(
     return joined.rename(index=str, columns=rename_map)
 
 
-def df_str_to_datetime(df, cols, datetime_format='%Y-%m-%d %H:%M:%S', tz='UTC'):
+def df_str_to_date(df, cols, datetime_format='%Y-%m-%d %H:%M:%S', tz='UTC'):
     """
-    Given a str representation of datetime, convert into a tz aware datetime object
+    Given a str representation of datetime, convert into a datetime.date for a given timezone
     :param pd.DataFrame df:
     :param list cols: datetime str cols to transform
     :param str datetime_format:
@@ -39,9 +39,10 @@ def df_str_to_datetime(df, cols, datetime_format='%Y-%m-%d %H:%M:%S', tz='UTC'):
     :return pd.DataFrame:
     """
     for col in cols:
-        df[col] = df[col].apply(lambda x: datetime.datetime.strptime(x, datetime_format).replace(tzinfo=pytz.timezone('UTC')).date())
+        df[col] = df[col].apply(lambda x: datetime.datetime.strptime(x, datetime_format).replace(tzinfo=pytz.timezone('UTC')))
         if tz != 'UTC':
             df[col] = df[col].apply(lambda x: x.astimezone(pytz.timezone(tz)))
+        df[col] = df[col].apply(lambda x: x.date())
     return df
 
 
@@ -92,7 +93,7 @@ def binnify(df, input_col, bin_labels, bin_values, binned_col_name):
     return df
 
 
-def calculate_pct(df, total_col, pct_precision=2, suffix='orderers'):
+def calculate_pct(df, total_col, pct_precision=2, suffix=''):
     """
     Given a DataFrame with hits/purchases for various cohort period columns and a total(:total_col:) column,
     calculate corresponding percentages for purchases in each cohort group
@@ -103,7 +104,7 @@ def calculate_pct(df, total_col, pct_precision=2, suffix='orderers'):
     total_col_index = df.columns.get_loc(total_col)
     for col in df.columns[:total_col_index].tolist() + df.columns[total_col_index+1:].tolist():
         df[col] = df.apply(
-            lambda row: '{} % {} ({})'.format(round(row[col] / row[total_col] * 100, pct_precision), suffix, row[col]),
+            lambda row: '{} % {}({})'.format(round(row[col] / row[total_col] * 100, pct_precision), suffix, row[col]),
             axis=1
         )
     return df

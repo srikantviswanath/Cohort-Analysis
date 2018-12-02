@@ -8,22 +8,22 @@ class TestTransformDataFrame(unittest.TestCase):
 
     def setUp(self):
         self.df_tz_conversion = pd.DataFrame.from_dict({
-            'Col1': ['2015-07-03 22:01:11', '2015-11-13 07:01:11', '2017-8-13 12:01:11'],
+            'Col1': ['2015-07-03 02:01:11', '2015-11-13 07:01:11', '2017-8-13 03:01:11'],
         })
         self.df_cohort_period = pd.DataFrame.from_dict({
-            'CohortDate': [dt.datetime(2018, 1, 1, 12, 50), dt.datetime(2018, 5, 1, 16, 50)],
+            'CohortDate(UserSignUp)': [dt.datetime(2018, 1, 1, 12, 50), dt.datetime(2018, 5, 1, 16, 50)],
             'Anchor': [dt.datetime(2018, 1, 3, 13, 50), dt.datetime(2018, 5, 1, 17, 50)]
         })
 
     def test_df_str_to_datetime_UTC(self):
         """convert str datetime to datetime date in the default UTC tz"""
-        transformed_df = transform.df_str_to_datetime(self.df_tz_conversion, ['Col1'])
-        self.assertEqual(transformed_df.iloc[0].tzname(), 'UTC')
+        transformed_df = transform.df_str_to_date(self.df_tz_conversion, ['Col1'])
+        self.assertEqual(transformed_df['Col1'].tolist(), [dt.date(2015, 7, 3), dt.date(2015, 11, 13), dt.date(2017, 8, 13)])
 
     def test_df_str_to_datetime_US_Eastern(self):
         """convert to US/Eastern tz"""
-        transformed_df = transform.df_str_to_datetime(self.df_tz_conversion, ['Col1'], tz='US/Eastern')
-        self.assertEqual(transformed_df.iloc[0].tzname(), 'EDT')
+        transformed_df = transform.df_str_to_date(self.df_tz_conversion, ['Col1'], tz='US/Eastern')
+        self.assertEqual(transformed_df['Col1'].tolist(), [dt.date(2015, 7, 2), dt.date(2015, 11, 13), dt.date(2017, 8, 12)])
 
     def test_calculate_cohort_period_days(self):
         transformed_df = transform.calculate_cohort_period(self.df_cohort_period, 'Anchor')
@@ -32,6 +32,26 @@ class TestTransformDataFrame(unittest.TestCase):
     def test_calculate_cohort_period_hours(self):
         transformed_df = transform.calculate_cohort_period(self.df_cohort_period, 'Anchor', extract='seconds')
         self.assertEqual(transformed_df['CohortPeriod'].values.tolist(), [3600, 3600])
+
+    def test_calculate_pct(self):
+        df = pd.DataFrame.from_dict({
+            'Column1': [4, 12, 15],
+            'Column2': [4, 4, 3],
+            'Total': [8, 16, 18]
+        })
+        transformed_df = transform.calculate_pct(df, 'Total', suffix='share')
+        self.assertListEqual(transformed_df['Column1'].tolist(), ['50.0 % share(4)', '75.0 % share(12)', '83.33 % share(15)', ])
+        self.assertListEqual(transformed_df['Column2'].tolist(), ['50.0 % share(4)', '25.0 % share(4)', '16.67 % share(3)', ])
+
+    def test_calculate_pct_default_suffix(self):
+        df = pd.DataFrame.from_dict({
+            'Column1': [4, 12, 15],
+            'Column2': [4, 4, 3],
+            'Total': [8, 16, 18]
+        })
+        transformed_df = transform.calculate_pct(df, 'Total')
+        self.assertListEqual(transformed_df['Column1'].tolist(), ['50.0 % (4)', '75.0 % (12)', '83.33 % (15)', ])
+        self.assertListEqual(transformed_df['Column2'].tolist(), ['50.0 % (4)', '25.0 % (4)', '16.67 % (3)', ])
 
 
 class TestDataframeBinning(unittest.TestCase):
@@ -61,6 +81,13 @@ class TestDataframeBinning(unittest.TestCase):
         })
         with self.assertRaises(ValueError):
             transform.generate_bins(df, 'Column', 2)
+
+    def test_binnify(self):
+        df = pd.DataFrame.from_dict({
+            'Column': [3, 5, 6, 8, 9],
+        })
+        transformed_df = transform.binnify(df, 'Column', ['low', 'med'], [3, 6, 9], 'Grade')
+        self.assertListEqual(transformed_df['Grade'].tolist(), ['low', 'low', 'low', 'med', 'med'])
 
 
 if __name__ == '__main__':
