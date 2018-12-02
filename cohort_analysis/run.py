@@ -3,6 +3,7 @@ import pandas as pd
 from cohort_analysis import constants as cts
 from cohort_analysis import transform
 
+OUTPUT_FILE_ROOT = 'analysed_data'
 COHORT_ANALYSIS_CONFIG = {
     'cohort_period_window': 7,  # e.g., 7-14 days cohort period
     'cohort_date_window': 7,  # e.g., 1/1 - 1/8
@@ -10,6 +11,7 @@ COHORT_ANALYSIS_CONFIG = {
 }
 
 def cohort_analysis(data_file_paths, keys, cohort_config, rename_map={}):
+    """Perform cohort analysis and return a pandas.DataFrame. Refer to the docstring of run for more info"""
     dfs = extract_csv_files(data_file_paths)
     df = transform.join_and_rename(*dfs, *keys, rename_map=rename_map)
     df = transform.df_str_to_date(df, [cts.COHORT_DATE, cts.ORDER_TS], tz='UTC')
@@ -29,15 +31,25 @@ def cohort_analysis(data_file_paths, keys, cohort_config, rename_map={}):
     return df.rename(index=str, columns={'All': 'Customers'})
 
 
-def run(data_file_paths, keys, cohort_config, rename_map={}):
+def run(data_file_paths, keys, cohort_config, output_file, rename_map={}):
+    """
+    Entry point for cohort analysis
+    :param list data_file_paths: list of data file input paths
+    :param list keys: unique keys of each of the files in :data_file_paths:
+    :param dict cohort_config: config dictionary containing cohort analysis knobs to tune
+    :param str output_file: name of the file to which the cohort analysis output is written to
+    :param dict rename_map: used to rename any columns
+    :return pd.DataFrame:
+    """
     analysed_df =  cohort_analysis(data_file_paths, keys, cohort_config, rename_map)
-    analysed_df.to_csv('analysed_data/orders_signup_dates.csv')
+    analysed_df.to_csv('{}/{}'.format(OUTPUT_FILE_ROOT, output_file))
     return analysed_df
 
 
 if __name__ == '__main__':
     print(run(
         ['data_sources/orders.csv', 'data_sources/customers.csv'], ('user_id', 'id'), COHORT_ANALYSIS_CONFIG,
+        'orders_signup_dates.csv',
         rename_map={
         'id_x': cts.ORDER_ID,
         'user_id': cts.USER_ID,
