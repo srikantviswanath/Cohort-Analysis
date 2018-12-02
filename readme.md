@@ -14,6 +14,6 @@ cohort_analysis/run/py
 
 should perform cohort analysis and generate a .csv file stored at 
 ```python
-cohort_analysis/data_sources/orders_signup_dates.csv
+cohort_analysis_output.csv
 ```
 

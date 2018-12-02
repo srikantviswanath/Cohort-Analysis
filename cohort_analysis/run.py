@@ -3,7 +3,7 @@ import pandas as pd
 from cohort_analysis import constants as cts
 from cohort_analysis import transform
 
-OUTPUT_FILE_ROOT = 'analysed_data'
+OUTPUT_FILE_ROOT = ''
 COHORT_ANALYSIS_CONFIG = {
     'cohort_period_window': 7,  # e.g., 7-14 days cohort period
     'cohort_date_window': 7,  # e.g., 1/1 - 1/8
@@ -42,14 +42,14 @@ def run(data_file_paths, keys, cohort_config, output_file, rename_map={}):
     :return pd.DataFrame:
     """
     analysed_df =  cohort_analysis(data_file_paths, keys, cohort_config, rename_map)
-    analysed_df.to_csv('{}/{}'.format(OUTPUT_FILE_ROOT, output_file))
+    analysed_df.to_csv('../{}'.format(output_file))
     return analysed_df
 
 
 if __name__ == '__main__':
     print(run(
-        ['data_sources/orders.csv', 'data_sources/customers.csv'], ('user_id', 'id'), COHORT_ANALYSIS_CONFIG,
-        'orders_signup_dates.csv',
+        ['data_sources/orders.csv', 'data_sources/customers.csv'], ['user_id', 'id'], COHORT_ANALYSIS_CONFIG,
+        'cohort_analysis_output.csv',
         rename_map={
         'id_x': cts.ORDER_ID,
         'user_id': cts.USER_ID,
